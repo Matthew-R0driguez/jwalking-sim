@@ -1,0 +1,387 @@
+#ADRIAN, MATTHEW, JONATHAN PROJECT
+#import needed libraries  
+import turtle
+from turtle import *
+import random
+import math
+import time
+
+#Define constants
+RIGHT_EDGE= 400
+LEFT_EDGE = -400
+BOTTOM_EDGE = -400
+TOP_EDGE = 400
+
+#Global variables
+screen = Screen()
+screen.title("CrossyRoad")
+screen.bgcolor("chartreuse3")
+screen.setup(801, 801)
+
+#MAKING THE MAP
+    #MAKING THE WATER
+mapwater1 = Turtle()
+mapwater2 = Turtle()
+
+mapstreet1 = Turtle()
+mapstreet2 = Turtle()
+mapstreet3 = Turtle()
+    #MAKING THE YELLOW LINES FOR THE ROADS
+maproad1 = Turtle()
+maproad2 = Turtle()
+maproad3 = Turtle()
+maproad4 = Turtle()
+maproad5 = Turtle()
+maproad6 = Turtle()
+
+#IMPORTANT VARIABLES
+Jump = 50
+lives = 9
+Numpoint = 0
+chanceUp = 0
+
+#IMPORTANT LIST
+portal = [-300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 300]
+powerUp = ["none", "powerup"]
+location = [-300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 300]
+#IMPORTANT TURTLES
+teleport = Turtle()
+hole = Turtle()
+lifeline = Turtle()
+Points = Turtle()
+power = Turtle()
+power.ht()
+explode = Turtle()
+explode.ht()
+#STREET VARIABLES
+road1=[] #A LIST FOR EACH ROAD THAT HAS CARS
+road2=[]
+road3=[]
+road4=[]
+road5=[]
+road6=[]
+    #Y COORDINATES OF THE CARS
+y1 = -250
+y2 = -200
+y3 = 100
+y4 = 200
+y5 = 250
+y6 = 300
+
+speed1 = 2.6
+speed2 = 2.5
+speed3 = 4
+speed4 = 3
+speed5 = 1.7
+speed6 = 1.8
+
+#LOGS
+log1=[] #A LIST FOR EACH ROAD THAT HAS LOGS
+log2=[]
+log3=[]
+    #Y COORDINATES OF THE LOGS
+ylog1= -100
+ylog2= -50
+ylog3 = 50
+   
+#MOVEMENT FUNCTIONS
+w = True
+s = True
+
+def moveR(): #MOVING RIGHT
+    ball.goto(ball.xcor()+50, ball.ycor())
+    ball.setheading(180)
+
+
+def moveL(): #MOVING LEFT
+    ball.goto(ball.xcor()-50, ball.ycor())
+    ball.setheading(-180)
+
+
+def moveUp(): #MOVING UP
+    global w
+    if w == True:
+        ball.goto(ball.xcor(), ball.ycor()+50)
+        ball.setheading(90)
+        
+def moveDown(): #MOVING DOWN
+    global s
+    if s == True:
+        ball.goto(ball.xcor(), ball.ycor()-50)
+        ball.setheading(-90)
+
+        
+listen()
+
+onkey(moveR, "d") or onkey(moveR, "Right") #ABLE TO USE ARROW KEYS OR W,A,S,D
+onkey(moveL, "a") or onkey(moveL, "Left")
+onkey(moveUp, "w") or onkey(moveUp, "Up")
+onkey(moveDown, "s") or onkey(moveDown, "Down")
+
+#OTHER FUNCTIONS
+def vroom(x, y, road, numcar, cardis, color, size): #CREATING CARS
+    for car in range (0, numcar):#A LOOP THAT CREATES CARS AND DETERMINES THEIR LOCATION
+        road.append(Turtle())
+        road[car].clear()
+        road[car].penup()
+        road[car].shape("square")
+        road[car].color(color)
+        road[car].shapesize(2, size) #road[car].shapesize(2,2.5)
+        road[car].goto(x,y)
+        x = x - cardis
+        
+def carmoveR(numcar, road, y, SPEED): #CARS THAT ARE GOING RIGHT
+    global RIGHT_EDGE 
+    global LEFT_EDGE
+    for car in range (0, numcar):
+        road[car].forward(SPEED)
+        if (road[car].xcor() >= RIGHT_EDGE):
+            road[car].goto(LEFT_EDGE-(Jump*2), y)
+
+def carmoveL(numcar, road, y, SPEED): #CARS THAT ARE GOING LEFT
+    global RIGHT_EDGE
+    global LEFT_EDGE
+    for car in range (0, numcar):
+        road[car].backward(SPEED)
+        if (road[car].xcor() <= LEFT_EDGE): #IF CARS HITS EDGE, IT WILL BRING IT BACK TO THE OPPSOITE EDGE
+            road[car].goto(RIGHT_EDGE+(Jump*2), y)      
+    
+def checkcol(road, ball, ycar):#COLLISION FOR CARS
+    global lives
+    global explode
+    if ycar != ball.ycor():#IF PLAYER IN THE SAME ROAD AS CARS
+        return
+    for currObj in range(0, len(road)):
+        Objx = road[currObj].xcor()
+        Objy = road[currObj].ycor()#CALCULATIONS TO FIND RADIUS OF PLAYER AND CARS
+        d = math.sqrt(((Objx - ball.xcor())**2) + ((Objy - ball.ycor())**2))
+        if d <= ((ball.shapesize()[0] + road[currObj].shapesize()[0])/2) * 20:
+            diestuff()
+            ball.goto(0, BOTTOM_EDGE+Jump)
+            lives = lives - 1
+
+#Check for collissions with logs in the lane passed in
+def checkcollog(log, ball, logdirection, ylogs, speed): #COLLISION FOR LOGS
+    global lives
+    global explode
+    if ylogs != ball.ycor():
+        return #they are not in this log row
+    onlog = False
+    for currlog in range(0, len(log)):
+        logx = log[currlog].xcor()
+        logy = log[currlog].ycor()
+        #check if on a log, if so, move with the log
+        d = math.sqrt(((logx - ball.xcor())**2) + ((logy - ball.ycor())**2))
+        if d <= ((ball.shapesize()[0]/2) * 20 +20):#CALCULATIONS TO FIND RADIUS OF PLAYER AND LOGS
+            ball.setheading(logdirection) 
+            ball.goto(ball.xcor()+speed, ball.ycor()) #ALLOWS PLAYER TO STAY ON TOP OF LOG
+            onlog = True
+            break
+    if onlog == False: #HELPS FIND OUT IF PLAYER ON LOG OR NOT
+        diestuff()
+        ball.goto(0, BOTTOM_EDGE+Jump)
+        lives = lives - 1
+
+def diestuff():
+        ball.color("red")
+        ball.shapesize(2)
+        screen.update()
+        time.sleep(0.5)
+        ball.shapesize(1)
+        ball.color("azure2")
+
+def makepowerup(powerUp, power, chanceUp):
+    chanceUp = random.randint(0, len(powerUp)-1)
+    if powerUp[chanceUp] == "powerup":
+        power.st()
+        power.penup()
+        power.shapesize(1, 1.5)
+        power.color("red")
+        power.shape("square")
+        x = random.randint(0, len(location)-1)
+        y = random.randint(0, len(location)-1)
+        power.goto(location[x], location[y])
+        return(powerUp[chanceUp])
+                                
+def Getpower(power):
+    global lives
+    liveup = math.sqrt(((power.xcor() - ball.xcor())**2) + ((power.ycor() - ball.ycor())**2))
+    if liveup <= ((ball.shapesize()[0] + power.shapesize()[0])/2) * 20+5:
+        lives = lives + 1
+        power.goto(400, 400)
+        power.ht()
+    
+    
+def pitfall(ball, hole): #IF PLAYER FALLS IN BLACK PIT, SEND THEM BACK TO START
+    global lives
+    global explode
+    falling = math.sqrt(((hole.xcor() - ball.xcor())**2) + ((hole.ycor() - ball.ycor())**2))
+    if falling <= ((ball.shapesize()[0] + hole.shapesize()[0])/2) * 20:
+        diestuff()
+        ball.goto(0, BOTTOM_EDGE+Jump)
+        lives = lives - 1
+
+def pit(hole, x): #CREATES THE DARK CIRCLE IN THE MIDDLE OF THE MAP
+    hole.color("black")
+    hole.clear()
+    hole.penup()
+    hole.shape("circle")
+    hole.shapesize(3.3)
+    hole.goto(x, 360)
+
+def makeportal(portal, teleport): #CREATING THE PORTAL AKA BLUE THING
+    global r
+    teleport.color("blue")
+    teleport.clear()
+    teleport.penup()
+    teleport.shape("circle")
+    teleport.shapesize(2.3)
+    r = random.randint(0, len(portal)-1)
+    teleport.goto(portal[r], 350)    
+
+def portalwin(portal, ball, teleport): #IF PLAYER MAKES IT TO THE PORTAL, GIVE POINTS
+    global Numpoint
+    global speed1
+    global speed2
+    global speed3
+    global speed4
+    global speed5
+    global speed6
+    space = math.sqrt(((teleport.xcor() - ball.xcor())**2) + ((teleport.ycor() - ball.ycor())**2))
+    if space <= ((ball.shapesize()[0] + teleport.shapesize()[0])/2) * 20:
+        ball.goto(0, BOTTOM_EDGE+Jump)
+        Numpoint = Numpoint + 10
+        makeportal(portal, teleport)#REMAKES THE PORTAL IN A DIFFERENT LOCATION
+        chanceUp = "powerup"
+        chanceUp = makepowerup(powerUp, power, chanceUp)
+        speed1 = speed1 + 0.15
+        speed2 = speed2 + 0.15
+        speed3 = speed3 + 0.15
+        speed4 = speed4 + 0.15
+        speed5 = speed5 + 0.15
+        speed6 = speed6 + 0.15
+
+
+def Numcount(Num, t, x, y, word): #AMOUNT OF LIVES/POINTS PLAYER HAS
+    t.penup()
+    t.goto(x, y)
+    t.write(Num, move=False, align="left", font=("Arial", 40, "normal"))
+    t.goto(x-10, y)
+    t.write(word, move=False, align="right", font=("Arial", 40, "normal"))
+    t.ht()
+
+def mapcreator(y, zone, size, color): #CREATES A TURTLE THE SHAPE OF A RECTANGLE
+    zone.penup()                    #THEN SETS THEM TO A COLOR AND SIZE
+    zone.goto(0, y)
+    zone.shape("square")
+    zone.color(color)
+    zone.shapesize(size, 40)
+                
+    
+screen.tracer(0)
+        
+        
+#ACTIVATING FUNCTIONS
+mapcreator(-75, mapwater1, 5, "deepskyblue") #PRINTING OUT WATER AREA
+mapcreator(50, mapwater2, 2.5, "deepskyblue")
+
+mapcreator(-250, maproad1, 0.1, "gold") #PRINTING OUT GOLD LINES IN BETWEEN CARS
+mapcreator(-200, maproad2, 0.1, "gold")
+mapcreator(100, maproad3, 0.1, "gold")
+mapcreator(200, maproad4, 0.1, "gold")
+mapcreator(250, maproad5, 0.1, "gold")
+mapcreator(300, maproad6, 0.1, "gold")
+
+mapcreator(-225, mapstreet1, 5, "black") #PRINTS OUT STREETS
+mapcreator(100, mapstreet2, 2.5, "black")
+mapcreator(250, mapstreet3, 7.5, "black")
+
+
+    #STARTING UP THE CARS
+vroom(RIGHT_EDGE, y1, road1, 4, 225, "DarkOrchid1",2) #PRINTS OUT ALL THE CARS
+vroom(RIGHT_EDGE, y2, road2, 5, 180, "DarkOrchid1",2)
+vroom(RIGHT_EDGE, y3, road3, 6, 150, "DarkOrchid1",2)
+vroom(RIGHT_EDGE, y4, road4, 4, 225, "DarkOrchid1",2)
+vroom(RIGHT_EDGE, y5, road5, 5, 180, "DarkOrchid1",2)
+vroom(RIGHT_EDGE, y6, road6, 5, 180, "DarkOrchid1",2)
+
+    #MAKING LOGS
+vroom(RIGHT_EDGE, ylog1, log1, 4, 225, "sienna",3.5) #PRINTS OUT ALL THE LOGS
+vroom(RIGHT_EDGE, ylog2, log2, 4, 225, "sienna",3.5)
+vroom(RIGHT_EDGE, ylog3, log3, 4, 225, "sienna",3.5)
+
+power.penup()
+power.goto(400,400)
+chanceUp = makepowerup(powerUp, power, chanceUp)
+
+#MAKING THE HOLE/PIT
+pit(hole, 0)
+
+# MAKING THE PORTAL
+makeportal(portal, teleport)
+
+#MAKING BALL
+ball = Turtle()
+ball.clear()
+ball.penup()
+
+ball.shape("circle")
+ball.shapesize(1)
+ball.color("azure2")
+ball.position()
+ball.speed(0)
+ball.sety(BOTTOM_EDGE+Jump)
+ball.setheading(90)
+
+#MAIN PROGRAM
+while True:
+    if ball.xcor() >= RIGHT_EDGE or ball.xcor() <= LEFT_EDGE: # IF PLAYER GOES OUT OF BOUNDS, RESET BALL
+        ball.goto(0, BOTTOM_EDGE+Jump)
+        lives = lives - 1
+    if ball.ycor()+75 >= TOP_EDGE: # IF PLAYER TRIES TO GO TO FAR UP OF DOWN SET KEY TO FALSE
+        w = False               #SO THAT PEOPLE DONT GO OUT OF THE MAP
+    else:
+        w = True
+    if ball.ycor()-75 <= BOTTOM_EDGE:
+        s = False
+    else:
+        s = True
+
+    carmoveL(4, road1, y1, speed1)
+    carmoveR(5, road2, y2, speed2)
+    carmoveL(6, road3, y3, speed3)
+    carmoveR(4, road4, y4, speed4)
+    carmoveR(5, road5, y5, speed5)
+    carmoveL(5, road6, y6, speed6)
+
+    checkcol(road1, ball, y1) #CHECKS FOR COLLISION WITH A CAR
+    checkcol(road2, ball, y2)
+    checkcol(road3, ball, y3)
+    checkcol(road4, ball, y4)
+    checkcol(road5, ball, y5)
+    checkcol(road6, ball, y6)
+
+    carmoveR(4, log1, ylog1, 2)#MAKES ALL OF THE LOGS MOVE
+    carmoveL(4, log2, ylog2, 2)
+    carmoveR(4, log3, ylog3, 1.5)
+    
+    checkcollog(log1, ball, 0, ylog1, 2) #CHECK FOR COLLISION WITH LOGS AND WATER
+    checkcollog(log2, ball, 180, ylog2, -2)
+    checkcollog(log3, ball, 0, ylog3, 1.5)
+    
+    portalwin(portal, ball, teleport)#CHECKS TO SEE IF PLAYER MADE IT TO BLUE CIRCLE
+
+    pitfall(ball, hole) #CHECKS TO SEE IF PLAYER FELL IN HOLE
+
+    Getpower(power)
+
+    Points.clear()
+    Numcount(Numpoint, Points, 300, -350,"POINTS/") #COUNTS THE AMOUNT OF POINTS THE PLAYER HAS
+    
+    lifeline.clear()
+    Numcount(lives, lifeline, -200, -350, "LIVES/") #COUNTS THE AMOUNT OF LIVES THE PLAYER HAS
+    if lives == 0: #IF PLAYER RUNS OUT OF LIVES, GAME OVER
+        turtle.done()
+
+    screen.update()
+

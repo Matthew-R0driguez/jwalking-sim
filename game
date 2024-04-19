@@ -36,7 +36,7 @@ maproad6 = Turtle()
 
 #IMPORTANT VARIABLES
 Jump = 50
-lives = 9
+lives = 15
 Numpoint = 0
 chanceUp = 0
 
@@ -222,7 +222,7 @@ def pitfall(ball, hole): #IF PLAYER FALLS IN BLACK PIT, SEND THEM BACK TO START
         lives = lives - 1
 
 def pit(hole, x): #CREATES THE DARK CIRCLE IN THE MIDDLE OF THE MAP
-    hole.color("black")
+    hole.color("brown")
     hole.clear()
     hole.penup()
     hole.shape("circle")
